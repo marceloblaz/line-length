@@ -29,7 +29,11 @@ figma.ui.onmessage = (msg) => {
             }
             //criando um novo array com as lengths dos objetos
             const temp = txtbxs.map(getlength);
-            console.log(txtbxs);
+            //verifica se a selecao tem qtd menor ou igual ao inputado pelo usuário
+            if (temp.every(function a(item) { return item <= msg.characters; })) {
+                const notification = "That selection is already shorter than " + msg.characters + " characters";
+                figma.notify(notification);
+            }
             figma.viewport.scrollAndZoomIntoView(selection);
         }
     }

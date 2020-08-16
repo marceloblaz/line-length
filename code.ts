@@ -12,33 +12,37 @@ figma.showUI(__html__);
 // callback. The callback will be passed the "pluginMessage" property of the
 // posted message.
 figma.ui.onmessage = (msg) => {
-  // One way of distinguishing between different types of messages sent from
-  // your HTML page is to use an object with a "type" property like this.
   if (msg.type === "change-length") {
+    //checa se o node é realmente de texto
     const selection = figma.currentPage.selection;
-    var txtobject:SceneNode;
-    function checktype(txtobject) {
-      return txtobject.type == "TEXT";
+    function checktype(item) {
+      return item.type === "TEXT";
     }
-    const txtbxs = selection.filter(checktype);
-    if (txtbxs.length === 0) {
+    //cria um array somente com os nodes de texto
+    const txtbx: Array<any> = selection.filter(checktype);
+    if (txtbx.length === 0) {
       figma.notify("No text layers were selected!");
-      return;
+      //checa se existe algum node que não possui fonte
+    } else if (txtbx.every((item) => item.hasMissingFont != false)) {
+      figma.notify("Uh oh, I can't work here. Looks like a font is missing!");
+    } else if (
+      txtbx.every((item) => item.characters.length <= msg.characters)
+    ) {
+      const notification =
+        "That selection is already shorter than " +
+        msg.characters +
+        " characters";
+      figma.notify(notification);
     } else {
-      //funcao para capturar a length do objeto
-      function getlength(txtobject){
-        return txtobject.name.length
-      }
-      //criando um novo array com as lengths dos objetos
-       const temp = txtbxs.map(getlength);
-      //verifica se a selecao tem qtd menor ou igual ao inputado pelo usuário
-       if (temp.every(function a (item:number){return item <= msg.characters})){
-         const notification = "That selection is already shorter than " + msg.characters + " characters";
-         figma.notify(notification);
-       }
-       
-      figma.viewport.scrollAndZoomIntoView(selection);
+      //variável que armazena a substring do texto da layer
+      figma.loadFontAsync({ family: "Roboto", style: "Regular" });
+
+      var substr = txtbx[0].characters.substring(0, msg.characters);
+      const temp = figma.createText();
+      temp.characters = substr;
     }
+
+    figma.viewport.scrollAndZoomIntoView(selection);
   }
 
   // Make sure to close the plugin when you're done. Otherwise the plugin will

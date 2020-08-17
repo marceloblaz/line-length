@@ -25,17 +25,32 @@ figma.ui.onmessage = (msg) => {
             figma.notify("Uh oh, I can't work here. Looks like a font is missing!");
         }
         else if (txtbx.every((item) => item.characters.length <= msg.characters)) {
-            const notification = "That selection is already shorter than " +
+            let notification = "All the text layers you selected were already shorter than " +
+                msg.characters +
+                " characters";
+            figma.notify(notification);
+        }
+        else if (txtbx.some((item) => item.characters.length <= msg.characters)) {
+            let shorterNodes = txtbx.filter(function (item) {
+                return item.characters.length <= msg.characters;
+            });
+            let notification = shorterNodes.length +
+                " layers in that selection were already shorter than " +
                 msg.characters +
                 " characters";
             figma.notify(notification);
         }
         else {
+            function getFont(item) {
+                return item.fontName;
+            }
+            //cria um array com todas as fontes em uso na selação
+            const fontsInUse = txtbx.map(getFont);
+            //carregar as fontes para possibilitar edição
             //variável que armazena a substring do texto da layer
-            figma.loadFontAsync({ family: "Roboto", style: "Regular" });
             var substr = txtbx[0].characters.substring(0, msg.characters);
-            const temp = figma.createText();
-            temp.characters = substr;
+            const temp = txtbx[0].clone();
+            //temp.characters = substr;
         }
         figma.viewport.scrollAndZoomIntoView(selection);
     }

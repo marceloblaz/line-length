@@ -15,13 +15,13 @@ figma.ui.onmessage = (msg) => {
         function checktype(item) {
             return item.type === "TEXT";
         }
-        //cria um array somente com os nodes de texto
         const txtbx = selection.filter(checktype);
+        //cria um array somente com os nodes de texto
         if (txtbx.length === 0) {
             figma.notify("No text layers were selected!");
             //checa se existe algum node que não possui fonte
         }
-        else if (txtbx.every((item) => item.hasMissingFont != false)) {
+        else if (txtbx.every((item) => item.hasMissingFont)) {
             figma.notify("Uh oh, I can't work here. Looks like a font is missing!");
         }
         else if (txtbx.every((item) => item.characters.length <= msg.characters)) {
@@ -30,27 +30,35 @@ figma.ui.onmessage = (msg) => {
                 " characters";
             figma.notify(notification);
         }
-        else if (txtbx.some((item) => item.characters.length <= msg.characters)) {
-            let shorterNodes = txtbx.filter(function (item) {
-                return item.characters.length <= msg.characters;
-            });
-            let notification = shorterNodes.length +
-                " layers in that selection were already shorter than " +
-                msg.characters +
-                " characters";
-            figma.notify(notification);
-        }
         else {
-            function getFont(item) {
-                return item.fontName;
-            }
-            //cria um array com todas as fontes em uso na selação
-            const fontsInUse = txtbx.map(getFont);
-            //carregar as fontes para possibilitar edição
             //variável que armazena a substring do texto da layer
-            var substr = txtbx[0].characters.substring(0, msg.characters);
-            const temp = txtbx[0].clone();
-            //temp.characters = substr;
+            const nodesToResize = txtbx.filter(function (item) {
+                return item.characters.length > msg.characters;
+            });
+            var lista = [];
+            function insereNovo(objeto) {
+                // pesquisa na lista algum objeto q tenha o mesmo nome da fonte e o mesmo estilo
+                let resultado = lista.find((item) => item.fontName.family == objeto.fontName.family &&
+                    item.fontName.style == objeto.fontName.style);
+                if (!resultado) {
+                    // se nao achou na lista
+                    lista.push(objeto);
+                }
+            }
+            for (let i = 0; i < nodesToResize.length; i++) {
+                insereNovo(nodesToResize[i]);
+            }
+            const uniqueFonts = lista;
+            const promise = figma.loadFontAsync(uniqueFonts[0].fontName);
+            Promise.all([promise]).then(() => {
+                nodesToResize.forEach(function (item) {
+                    let temp = item.clone();
+                    temp.characters = item.characters.substr(0, msg.characters);
+                    let newWidth = temp.width;
+                    temp.remove();
+                    item.resize(newWidth, item.height);
+                });
+            });
         }
         figma.viewport.scrollAndZoomIntoView(selection);
     }

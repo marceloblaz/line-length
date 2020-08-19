@@ -70,7 +70,6 @@ figma.ui.onmessage = (msg) => {
       });
     }
 
-    figma.viewport.scrollAndZoomIntoView(selection);
   }
 
   // Make sure to close the plugin when you're done. Otherwise the plugin will

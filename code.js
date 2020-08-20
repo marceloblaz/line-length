@@ -19,10 +19,9 @@ figma.ui.onmessage = (msg) => {
         //cria um array somente com os nodes de texto
         if (txtbx.length === 0) {
             figma.notify("No text layers were selected!");
-            //checa se existe algum node que não possui fonte
         }
         else if (txtbx.every((item) => item.hasMissingFont)) {
-            figma.notify("Uh oh, I can't work here. Looks like a font is missing!");
+            figma.notify("Uh oh, I can't work here. Looks like the font are missing!");
         }
         else if (txtbx.every((item) => item.characters.length <= msg.characters)) {
             let notification = "All the text layers you selected were already shorter than " +
@@ -31,24 +30,24 @@ figma.ui.onmessage = (msg) => {
             figma.notify(notification);
         }
         else {
-            //variável que armazena a substring do texto da layer
             const nodesToResize = txtbx.filter(function (item) {
                 return item.characters.length > msg.characters;
             });
-            var lista = [];
-            function insereNovo(objeto) {
-                // pesquisa na lista algum objeto q tenha o mesmo nome da fonte e o mesmo estilo
-                let resultado = lista.find((item) => item.fontName.family == objeto.fontName.family &&
+            //variable to store only nodes that need resizing
+            var list = [];
+            function insertNew(objeto) {
+                // searches list for any object that has the same font family name and font style
+                let result = list.find((item) => item.fontName.family == objeto.fontName.family &&
                     item.fontName.style == objeto.fontName.style);
-                if (!resultado) {
-                    // se nao achou na lista
-                    lista.push(objeto);
+                if (!result) {
+                    // if it doesn't find it
+                    list.push(objeto);
                 }
             }
             for (let i = 0; i < nodesToResize.length; i++) {
-                insereNovo(nodesToResize[i]);
+                insertNew(nodesToResize[i]);
             }
-            const uniqueFonts = lista;
+            const uniqueFonts = list;
             const promise = figma.loadFontAsync(uniqueFonts[0].fontName);
             Promise.all([promise]).then(() => {
                 nodesToResize.forEach(function (item) {
@@ -59,6 +58,12 @@ figma.ui.onmessage = (msg) => {
                     item.resize(newWidth, item.height);
                 });
             });
+            if (nodesToResize.length == 1) {
+                figma.notify(nodesToResize.length + " layer was resized!");
+            }
+            else {
+                figma.notify(nodesToResize.length + " layers were resized!");
+            }
         }
     }
     // Make sure to close the plugin when you're done. Otherwise the plugin will

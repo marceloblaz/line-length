@@ -37,7 +37,7 @@ figma.ui.onmessage = (msg) => {
       });
       //variable to store only nodes that need resizing
 
-      var list = [];
+      let list = [];
       function insertNew(objeto: any) {
         // searches list for any object that has the same font family name and font style
         let result = list.find(

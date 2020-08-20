@@ -10,12 +10,8 @@ figma.showUI(__html__);
 // posted message.
 figma.ui.onmessage = (msg) => {
     if (msg.type === "change-length") {
-        //checa se o node é realmente de texto
         const selection = figma.currentPage.selection;
-        function checktype(item) {
-            return item.type === "TEXT";
-        }
-        const txtbx = selection.filter(checktype);
+        const txtbx = selection.filter(function (item) { return item.type === "TEXT"; });
         //cria um array somente com os nodes de texto
         if (txtbx.length === 0) {
             figma.notify("No text layers were selected!");
@@ -58,11 +54,12 @@ figma.ui.onmessage = (msg) => {
                     item.resize(newWidth, item.height);
                 });
             });
-            if (nodesToResize.length == 1) {
-                figma.notify(nodesToResize.length + " layer was resized!");
-            }
-            else {
-                figma.notify(nodesToResize.length + " layers were resized!");
+            switch (nodesToResize.length) {
+                case 1:
+                    figma.notify(nodesToResize.length + " layer was resized!");
+                    break;
+                default:
+                    figma.notify(nodesToResize.length + " layers were resized!");
             }
         }
     }

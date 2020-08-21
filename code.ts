@@ -59,6 +59,7 @@ figma.ui.onmessage = (msg) => {
       const promise = figma.loadFontAsync(uniqueFonts[0].fontName as FontName);
       Promise.all([promise]).then(() => {
         nodesToResize.forEach(function (item: TextNode) {
+          item.textAutoResize = "WIDTH_AND_HEIGHT";
           let temp = item.clone();
           temp.characters = item.characters.substr(0, msg.characters);
           let newWidth = temp.width;

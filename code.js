@@ -11,19 +11,15 @@ figma.showUI(__html__);
 figma.ui.onmessage = (msg) => {
     if (msg.type === "change-length") {
         const selection = figma.currentPage.selection;
-        const txtbx = selection.filter(function (item) { return item.type === "TEXT"; });
+        const txtbx = selection.filter(function (item) {
+            return item.type === "TEXT";
+        });
         //cria um array somente com os nodes de texto
         if (txtbx.length === 0) {
             figma.notify("No text layers were selected!");
         }
         else if (txtbx.every((item) => item.hasMissingFont)) {
             figma.notify("Uh oh, I can't work here. Looks like the font are missing!");
-        }
-        else if (txtbx.every((item) => item.characters.length <= msg.characters)) {
-            let notification = "All the text layers you selected were already shorter than " +
-                msg.characters +
-                " characters";
-            figma.notify(notification);
         }
         else {
             const nodesToResize = txtbx.filter(function (item) {
@@ -44,17 +40,19 @@ figma.ui.onmessage = (msg) => {
                 insertNew(nodesToResize[i]);
             }
             const uniqueFonts = list;
-            const promise = figma.loadFontAsync(uniqueFonts[0].fontName);
-            Promise.all([promise]).then(() => {
-                nodesToResize.forEach(function (item) {
-                    item.textAutoResize = "WIDTH_AND_HEIGHT";
-                    let temp = item.clone();
-                    temp.characters = item.characters.substr(0, msg.characters);
-                    let newWidth = temp.width;
-                    temp.remove();
-                    item.resize(newWidth, item.height);
+            for (let i = 0; i < uniqueFonts.length; i++) {
+                const promise = figma.loadFontAsync(uniqueFonts[i].fontName);
+                Promise.all([promise]).then(() => {
+                    nodesToResize.forEach(function (item) {
+                        item.textAutoResize = "WIDTH_AND_HEIGHT";
+                        let temp = item.clone();
+                        temp.characters = item.characters.substr(0, msg.characters);
+                        let newWidth = temp.width;
+                        temp.remove();
+                        item.resize(newWidth, item.height);
+                    });
                 });
-            });
+            }
             switch (nodesToResize.length) {
                 case 1:
                     figma.notify(nodesToResize.length + " layer was resized!");

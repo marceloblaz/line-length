@@ -23,9 +23,9 @@ figma.ui.onmessage = (msg) => {
         }
         else {
             const nodesToResize = txtbx.filter(function (item) {
-                return item.characters.length > msg.characters;
+                return item.characters.length >= msg.characters;
             });
-            //variable to store only nodes that need resizing
+            //store only nodes that have at least the same amount of characters than what the user wants
             let list = [];
             function insertNew(objeto) {
                 // searches list for any object that has the same font family name and font style

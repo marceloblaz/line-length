@@ -19,18 +19,23 @@ figma.ui.onmessage = (msg) => {
       return item.type === "TEXT";
     });
     //cria um array somente com os nodes de texto
+
+    const nodesToResize = txtbx.filter(function (item: TextNode) {
+      return item.characters.length >= msg.characters;
+    });
+    //store only nodes that have at least the same amount of characters than what the user wants
+
     if (txtbx.length === 0) {
       figma.notify("No text layers were selected!");
     } else if (txtbx.every((item) => item.hasMissingFont)) {
       figma.notify(
         "Uh oh, I can't work here. Looks like the font are missing!"
       );
+    } else if (nodesToResize.length == 0) {
+      figma.notify(
+        "There aren't that many characters in the layers you selected"
+      );
     } else {
-      const nodesToResize = txtbx.filter(function (item: TextNode) {
-        return item.characters.length >= msg.characters;
-      });
-      //store only nodes that have at least the same amount of characters than what the user wants
-
       let list = [];
       function insertNew(objeto: any) {
         // searches list for any object that has the same font family name and font style

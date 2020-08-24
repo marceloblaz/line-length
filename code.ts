@@ -29,9 +29,9 @@ figma.ui.onmessage = (msg) => {
       figma.notify("No text layers were selected!");
     } else if (txtbx.every((item) => item.hasMissingFont)) {
       figma.notify(
-        "Uh oh, I can't work here. Looks like the font are missing!"
+        "Uh oh, I can't work here. Looks like a font is missing!"
       );
-    } else if (nodesToResize.length == 0) {
+    } else if (nodesToResize.length === 0) {
       figma.notify(
         "There aren't that many characters in the layers you selected"
       );

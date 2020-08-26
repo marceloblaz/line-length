@@ -4,7 +4,7 @@
 // You can access browser APIs in the <script> tag inside "ui.html" which has a
 // full browser environment (see documentation).
 // This shows the HTML page in "ui.html".
-figma.showUI(__html__);
+figma.showUI(__html__, { width: 300, height: 180 });
 // Calls to "parent.postMessage" from within the HTML page will trigger this
 // callback. The callback will be passed the "pluginMessage" property of the
 // posted message.
@@ -19,13 +19,17 @@ figma.ui.onmessage = (msg) => {
             return item.characters.length >= msg.characters;
         });
         //store only nodes that have at least the same amount of characters than what the user wants
-        if (txtbx.length === 0) {
+        if (msg.characters === 0) {
+            figma.notify("Sorry but you cannot set your average line length to zero characters");
+            figma.closePlugin();
+        }
+        else if (txtbx.length === 0) {
             figma.notify("No text layers were selected!");
         }
         else if (txtbx.every((item) => item.hasMissingFont)) {
-            figma.notify("Uh oh, I can't work here. Looks like the font are missing!");
+            figma.notify("Uh oh, I can't work here. Looks like a font is missing!");
         }
-        else if (nodesToResize.length == 0) {
+        else if (nodesToResize.length === 0) {
             figma.notify("There aren't that many characters in the layers you selected");
         }
         else {

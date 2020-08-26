@@ -31,14 +31,28 @@
   </head>
   <body>
     <h2>Set line length</h2>
-    <p>Count: <input id="count" value="5" /></p>
+    <p>Count: <input id="customval" value="" /></p>
     <div class="actions">
-      <button id="create" class="button button--primary">Resize</button>
+      <button id="resize" class="button button--primary" disabled="true">Resize</button>
       <button id="cancel" class='button button--secondary'>Cancel</button>
     </div>
   </body>
   <script>
-    document.getElementById("create").onclick = () => {
+      document.getElementById("resize").onclick = () => {
+      const textbox = document.getElementById("count");
+      const characters = parseInt(textbox.value, 10);
+      }
+
+    document.getElementById("customval").addEventListener("keyup", function(){
+        if (!this.value){
+          document.getElementById("resize").disabled = true;
+        } else{
+          document.getElementById("resize").disabled = !true;
+
+        }
+    })
+
+    document.getElementById("resize").onclick = () => {
       const textbox = document.getElementById("count");
       const characters = parseInt(textbox.value, 10);
       parent.postMessage(

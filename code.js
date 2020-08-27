@@ -53,7 +53,7 @@ figma.ui.onmessage = (msg) => {
                     nodesToResize.forEach(function (item) {
                         item.textAutoResize = "WIDTH_AND_HEIGHT";
                         let temp = item.clone();
-                        temp.characters = item.characters.substr(0, msg.characters);
+                        temp.characters = item.characters.substr(0, msg.characters - 1);
                         let newWidth = temp.width;
                         temp.remove();
                         item.resize(newWidth, item.height);

@@ -20,14 +20,14 @@ figma.ui.onmessage = (msg) => {
         });
         //store only nodes that have at least the same amount of characters than what the user wants
         if (msg.characters === 0) {
-            figma.notify("Sorry but you cannot set your average line length to zero characters");
+            figma.notify("Sorry, but you can't set your average line length to zero characters");
             figma.closePlugin();
         }
         else if (txtbx.length === 0) {
             figma.notify("No text layers were selected!");
         }
         else if (txtbx.every((item) => item.hasMissingFont)) {
-            figma.notify("Uh oh, I can't work here. Looks like a font is missing!");
+            figma.notify("Uh oh, can't work here. Looks like a font is missing!");
         }
         else if (nodesToResize.length === 0) {
             figma.notify("There aren't that many characters in the layers you selected");
@@ -69,7 +69,5 @@ figma.ui.onmessage = (msg) => {
             }
         }
     }
-    // Make sure to close the plugin when you're done. Otherwise the plugin will
-    // keep running, which shows the cancel button at the bottom of the screen.
     figma.closePlugin();
 };

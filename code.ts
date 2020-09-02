@@ -17,10 +17,10 @@ figma.ui.onmessage = (msg) => {
     const txtbx: Array<any> = selection.filter(function (item) {
       return item.type === "TEXT";
     });
-    //cria um array somente com os nodes de texto
+    //creates an array of only text nodes
     const nodesToResize = txtbx.filter(function (item: TextNode) {
       return item.characters.length >= msg.characters;
-    });
+    }); 
     //store only nodes that have at least the same amount of characters than what the user wants
     if (msg.characters === 0) {
       figma.notify(

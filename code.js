@@ -14,7 +14,7 @@ figma.ui.onmessage = (msg) => {
         const txtbx = selection.filter(function (item) {
             return item.type === "TEXT";
         });
-        //cria um array somente com os nodes de texto
+        //creates an array of only text nodes
         const nodesToResize = txtbx.filter(function (item) {
             return item.characters.length >= msg.characters;
         });

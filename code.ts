@@ -1,9 +1,37 @@
-// This plugin will open a modal to prompt the user to enter a number, and
-// it will then create that many rectangles on the screen.
+function loadFonts(nodesToResize: Array<TextNode>) {
+  return new Promise((resolve, reject) => {
+    let fontList: Array<FontName> = nodesToResize.reduce(
+      (prev: Array<FontName>, node: TextNode) => {
+        function pushFont(font: FontName) {
+          if (
+            !prev.find(
+              (fontName) =>
+                fontName.family === (font as FontName).family &&
+                fontName.style === (font as FontName).style
+            )
+          ) {
+            prev.push(font);
+          }
+        }
 
-// This file holds the main code for the plugins. It has access to the *document*.
-// You can access browser APIs in the <script> tag inside "ui.html" which has a
-// full browser environment (see documentation).
+        if (node.fontName == figma.mixed) {
+          for (let i = 0; i < node.characters.length; i++) {
+            pushFont(node.getRangeFontName(i, i + 1) as FontName);
+          }
+        } else {
+          pushFont(node.fontName);
+        }
+
+        return prev;
+      },
+      [] as Array<FontName>
+    );
+
+    Promise.all(fontList.map((font) => figma.loadFontAsync(font))).then(() =>
+      resolve()
+    );
+  });
+}
 
 // This shows the HTML page in "ui.html".
 figma.showUI(__html__, { width: 300, height: 180 });
@@ -20,7 +48,7 @@ figma.ui.onmessage = (msg) => {
     //creates an array of only text nodes
     const nodesToResize = txtbx.filter(function (item: TextNode) {
       return item.characters.length >= msg.characters;
-    }); 
+    });
     //store only nodes that have at least the same amount of characters than what the user wants
     if (msg.characters === 0) {
       figma.notify(
@@ -36,45 +64,23 @@ figma.ui.onmessage = (msg) => {
         "There aren't that many characters in the layers you selected"
       );
     } else {
-      let list = [];
-      function insertNew(objeto: any) {
-        // searches list for any object that has the same font family name and font style
-        let result = list.find(
-          (item) =>
-            item.fontName.family == objeto.fontName.family &&
-            item.fontName.style == objeto.fontName.style
-        );
-        if (!result) {
-          // if it doesn't find it
-          list.push(objeto);
-        }
-      }
-
-      for (let i = 0; i < nodesToResize.length; i++) {
-        insertNew(nodesToResize[i]);
-      }
-
-      const uniqueFonts = list;
-      for (let i = 0; i < uniqueFonts.length; i++) {
-        const promise = figma.loadFontAsync(uniqueFonts[i].fontName);
-        Promise.all([promise]).then(() => {
-          nodesToResize.forEach(function (item: TextNode) {
-            item.textAutoResize = "WIDTH_AND_HEIGHT";
-            let temp = item.clone();
-            temp.characters = item.characters.substr(0, msg.characters-1);
-            let newWidth = temp.width;
-            temp.remove();
-            item.resize(newWidth, item.height);
-          });
-        });
-      }
-      switch (nodesToResize.length) {
-        case 1:
-          figma.notify(nodesToResize.length + " layer was resized!");
-          break;
-        default:
-          figma.notify(nodesToResize.length + " layers were resized!");
-      }
+      loadFonts(nodesToResize).then(() =>
+        nodesToResize.forEach(function (item: TextNode) {
+          item.textAutoResize = "WIDTH_AND_HEIGHT";
+          let temp = item.clone();
+          temp.characters = item.characters.substr(0, msg.characters - 1);
+          let newWidth = temp.width;
+          temp.remove();
+          item.resize(newWidth, item.height);
+        })
+      );
+    }
+    switch (nodesToResize.length) {
+      case 1:
+        figma.notify(nodesToResize.length + " layer was resized!");
+        break;
+      default:
+        figma.notify(nodesToResize.length + " layers were resized!");
     }
   }
 

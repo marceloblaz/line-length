@@ -33,7 +33,7 @@ function loadFonts(nodesToResize: Array<TextNode>) {
   });
 }
 
-// This shows the HTML page in "ui.html".
+// This shows the HTML page in "ui.html"
 figma.showUI(__html__, { width: 300, height: 180 });
 
 // Calls to "parent.postMessage" from within the HTML page will trigger this

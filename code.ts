@@ -36,6 +36,8 @@ function loadFonts(nodesToResize: Array<TextNode>) {
 function checkCharacters(txtndArr: Array<any>) {
   if (txtndArr.length != 1) {
     figma.ui.postMessage({ pluginMessage: { countable: false } });
+  } else if (txtndArr.every((item) => item.hasMissingFont)) {
+    figma.notify("Uh oh, can't work here. Looks like a font is missing!");
   } else {
     let node = txtndArr[0];
     let tempnodeArr = [node.clone()];

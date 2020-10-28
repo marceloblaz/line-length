@@ -940,22 +940,34 @@
     </style>
   </head>
   <body>
-    <div class="content" style="margin: 24px 8px">
+    <div class="content" style="margin: 16px 8px 24px 8px">
       <p
-        class="type--pos-medium-medium"
-        style="line-height: auto; margin-bottom: 0"
-      >
+        id="currentCount"
+        style="
+          font-size: 11px;
+          font-style: italic;
+          color: rgba(0, 0, 0, 0.5);
+          transform: translate(0px, 4px);
+        "
+      ></p>
+      <p class="type--pos-medium-medium" style="margin-bottom: 0">
         Choose the average amount of characters you want per line
       </p>
       <div id="insertcustom" style="margin-top: 0px">
         <p
           class="label"
-          style="margin: 0; padding-left: 0; font-style: italic; font-size: 11px"
+          style="
+            margin: 0;
+            padding-left: 0;
+            font-style: italic;
+            font-size: 11px;
+            transform: translate(0px, 4px);
+            background: transparent;
+          "
         >
           Type in value
         </p>
         <input
-          
           style="
             padding: 0 4px 2px 8px;
             border: 1px solid rgba(0, 0, 0, 0.1);
@@ -968,7 +980,18 @@
           placeholder="E.g. 45"
           value=""
         />
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSfAUNEUPIgsAEu8dNl0EUTuBYKmEeBcPYfMKN5duSpiQbUSvg/viewform?usp=sf_link" target="_blank" style="color:#18a0fb; font-size: 9px; display: block; margin-top: 16px; float:right">Give feedback (1min)</a>
+        <a
+          href="https://docs.google.com/forms/d/e/1FAIpQLSfAUNEUPIgsAEu8dNl0EUTuBYKmEeBcPYfMKN5duSpiQbUSvg/viewform?usp=sf_link"
+          target="_blank"
+          style="
+            color: rgba(0, 0, 0, 0.5);
+            font-size: 9px;
+            display: block;
+            margin-top: 20px;
+            float: right;
+          "
+          >Give feedback (1min)</a
+        >
       </div>
     </div>
     <div class="actions">
@@ -979,10 +1002,6 @@
     </div>
   </body>
   <script>
-    // document.getElementById("customval").addEventListener("mouseover", function () {
-    //   this.style.border = "1px solid rgba(0,0,0,0.3)";
-    // });
-
     document.getElementById("customval").addEventListener("keyup", function () {
       if (!this.value) {
         document.getElementById("resize").disabled = true;
@@ -1002,6 +1021,17 @@
 
     document.getElementById("cancel").onclick = () => {
       parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
+    };
+    onmessage = (e) => {
+      if (e.data.pluginMessage.pluginMessage.countable) {
+        document.getElementById("currentCount").innerHTML =
+          "Current average line length is <span style='color: #18a0fb; font-style: italic; font-weight: 600'>" +
+          e.data.pluginMessage.currentCount +
+          " ch/line</span>";
+      } else {
+        document.getElementById("currentCount").innerHTML =
+          "Select a single text layer to get its average line length";
+      }
     };
   </script>
 </html>

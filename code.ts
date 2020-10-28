@@ -33,23 +33,61 @@ function loadFonts(nodesToResize: Array<TextNode>) {
   });
 }
 
-// This shows the HTML page in "ui.html"
-figma.showUI(__html__, { width: 300, height: 180 });
+function checkCharacters(txtndArr: Array<any>) {
+  if (txtndArr.length != 1) {
+    figma.ui.postMessage({ pluginMessage: { countable: false } });
+  } else {
+    let node = txtndArr[0];
+    let tempnodeArr = [node.clone()];
+    let charactersArr = node.characters.split("");
+    let tempnode = tempnodeArr[0];
+    loadFonts(tempnodeArr).then(() => {
+      tempnode.deleteCharacters(0, tempnode.characters.length);
+      tempnode.textAutoResize = "WIDTH_AND_HEIGHT";
+      var i = 0;
+      do {
+        tempnode.insertCharacters(0, charactersArr[i++]);
+      } while (i < charactersArr.length && tempnode.width <= node.width);
+      const currentCount = tempnode.characters.length;
+      tempnode.remove();
+      figma.ui.postMessage({
+        pluginMessage: { countable: true },
+        currentCount,
+      });
+    });
+  }
+}
 
-// Calls to "parent.postMessage" from within the HTML page will trigger this
-// callback. The callback will be passed the "pluginMessage" property of the
-// posted message.
+//__
+
+
+figma.showUI(__html__, { width: 316, height: 200 });
+checkCharacters(
+  figma.currentPage.selection.filter((item) => {
+    return item.type == "TEXT";
+  })
+);
+figma.on("selectionchange", () =>
+  checkCharacters(
+    figma.currentPage.selection.filter((item) => {
+      return item.type == "TEXT";
+    })
+  )
+);
+//triggers checkcharacters everytime selection changes
+//must not use constants created below because the selection must not be a constant
+
+
 figma.ui.onmessage = (msg) => {
+  const selection = figma.currentPage.selection;
+  const txtbx: Array<any> = selection.filter(function (item) {
+    return item.type === "TEXT";
+  });
+  const nodesToResize = txtbx.filter(function (item: TextNode) {
+    return item.characters.length >= msg.characters;
+  });
+  //--
   if (msg.type === "change-length") {
-    const selection = figma.currentPage.selection;
-    const txtbx: Array<any> = selection.filter(function (item) {
-      return item.type === "TEXT";
-    });
-    //creates an array of only text nodes
-    const nodesToResize = txtbx.filter(function (item: TextNode) {
-      return item.characters.length >= msg.characters;
-    });
-    //store only nodes that have at least the same amount of characters than what the user wants
     if (msg.characters === 0) {
       figma.notify(
         "Sorry, but you can't set your average line length to zero characters"

@@ -1,12 +1,8 @@
 # Line Length
 
-Line Length  is a Figma plugin that will allow you to size your text layer by the average amount of characters per line
+Line Length  is a Figma plugin that will allow you to get text layers' average line length and size your them by the average amount of characters per line.
 
-
-## Roadmap
-*Support for text layers with mixed fonts
-
-
+Line length already supports mixed fonts and also has the feature of showing how many characters per line are in a given text node
 
 
 ## License

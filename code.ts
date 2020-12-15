@@ -59,9 +59,7 @@ function checkCharacters(txtndArr: Array<any>) {
     });
   }
 }
-
 //__
-
 
 figma.showUI(__html__, { width: 316, height: 200 });
 checkCharacters(
@@ -78,7 +76,6 @@ figma.on("selectionchange", () =>
 );
 //triggers checkcharacters everytime selection changes
 //must not use constants created below because the selection must not be a constant
-
 
 figma.ui.onmessage = (msg) => {
   const selection = figma.currentPage.selection;

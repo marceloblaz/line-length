@@ -1,6 +1,7 @@
 <html>
   <head>
     <style>
+      
       /* Figma Plugin DS styles */
       * {
         -webkit-box-sizing: border-box;
@@ -995,13 +996,15 @@
       </div>
     </div>
     <div class="actions">
-      <button id="resize" class="button button--primary" disabled="true">
-        Resize
+      <button id="resize" class="button button--primary" disabled="true" title="Press 'enter'">
+        Resize (Enter⏎) 
       </button>
       <button id="cancel" class="button button--secondary">Cancel</button>
     </div>
   </body>
+  <!-- _____________ -->
   <script>
+    document.getElementById("customval").focus();
     document.getElementById("customval").addEventListener("keyup", function () {
       if (!this.value) {
         document.getElementById("resize").disabled = true;
@@ -1010,14 +1013,24 @@
       }
     });
 
-    document.getElementById("resize").onclick = () => {
+    function sendMessage(){
       const textbox = document.getElementById("customval");
       const characters = parseInt(textbox.value, 10);
       parent.postMessage(
         { pluginMessage: { type: "change-length", characters } },
         "*"
       );
+    }
+
+    document.getElementById("resize").onclick = () => {
+      sendMessage();
     };
+
+    window.addEventListener("keydown", (event)=>{
+        if(event.key === "Enter"){
+          sendMessage();
+        }
+    })
 
     document.getElementById("cancel").onclick = () => {
       parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");

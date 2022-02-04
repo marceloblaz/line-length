@@ -85,19 +85,18 @@ figma.ui.onmessage = (msg) => {
             loadFonts(nodesToResize).then(() => nodesToResize.forEach(function (item) {
                 item.textAutoResize = "WIDTH_AND_HEIGHT";
                 let temp = item.clone();
-                temp.characters = item.characters.substr(0, msg.characters - 1);
+                temp.characters = item.characters.slice(0, msg.characters);
                 let newWidth = temp.width;
                 temp.remove();
                 item.resize(newWidth, item.height);
             }));
         }
-        switch (nodesToResize.length) {
-            case 1:
-                figma.notify(nodesToResize.length + " layer was resized!");
-                break;
-            default:
-                figma.notify(nodesToResize.length + " layers were resized!");
-        }
     }
-    figma.closePlugin();
 };
+// switch (nodesToResize.length) {
+//   case 1:
+//     figma.notify(nodesToResize.length + " layer was resized!");
+//     break;
+//   default:
+//     figma.notify(nodesToResize.length + " layers were resized!");
+// }

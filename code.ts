@@ -1,5 +1,5 @@
 function loadFonts(nodesToResize: Array<TextNode>) {
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     let fontList: Array<FontName> = nodesToResize.reduce(
       (prev: Array<FontName>, node: TextNode) => {
         function pushFont(font: FontName) {
@@ -105,21 +105,22 @@ figma.ui.onmessage = (msg) => {
         nodesToResize.forEach(function (item: TextNode) {
           item.textAutoResize = "WIDTH_AND_HEIGHT";
           let temp = item.clone();
-          temp.characters = item.characters.substr(0, msg.characters - 1);
+          temp.characters = item.characters.slice(0, msg.characters);
           let newWidth = temp.width;
           temp.remove();
           item.resize(newWidth, item.height);
         })
       );
     }
-    switch (nodesToResize.length) {
-      case 1:
-        figma.notify(nodesToResize.length + " layer was resized!");
-        break;
-      default:
-        figma.notify(nodesToResize.length + " layers were resized!");
-    }
+    
   }
-
-  figma.closePlugin();
 };
+
+
+// switch (nodesToResize.length) {
+//   case 1:
+//     figma.notify(nodesToResize.length + " layer was resized!");
+//     break;
+//   default:
+//     figma.notify(nodesToResize.length + " layers were resized!");
+// }

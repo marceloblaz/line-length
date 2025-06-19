@@ -7,66 +7,46 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-// Helper to load all unique fonts in a set of text nodes
-function loadFonts(nodes) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const fonts = [];
-        for (const node of nodes) {
-            if (node.fontName === figma.mixed) {
-                for (let i = 0; i < node.characters.length; i++) {
-                    const font = node.getRangeFontName(i, i + 1);
-                    if (!fonts.some(f => f.family === font.family && f.style === font.style)) {
-                        fonts.push(font);
-                    }
-                }
-            }
-            else {
-                const font = node.fontName;
-                if (!fonts.some(f => f.family === font.family && f.style === font.style)) {
-                    fonts.push(font);
-                }
-            }
-        }
-        yield Promise.all(fonts.map(font => figma.loadFontAsync(font)));
-    });
-}
 // Helper to get all selected text nodes
 function getSelectedTextNodes() {
     return figma.currentPage.selection.filter((node) => node.type === "TEXT");
 }
-// Calculate max chars per line before wrapping
-function getMaxCharsPerLine(node) {
+function loadFontsForNode(node) {
     return __awaiter(this, void 0, void 0, function* () {
-        const clone = node.clone();
-        yield loadFonts([clone]);
-        clone.deleteCharacters(0, clone.characters.length);
-        clone.resize(node.width, node.height);
-        clone.textAutoResize = "HEIGHT";
-        const chars = node.characters.split("");
-        const initialHeight = clone.height;
-        let i = 0;
-        for (; i < chars.length; i++) {
-            clone.insertCharacters(i, chars[i]);
-            if (clone.height > initialHeight)
-                break;
-        }
-        clone.remove();
-        return i;
+        const fonts = node.getRangeAllFontNames(0, node.characters.length);
+        yield Promise.all(fonts.map(figma.loadFontAsync));
     });
 }
-// Check and report average line length
-function checkCharacters(nodes) {
+function loadFontsForNodes(nodes) {
     return __awaiter(this, void 0, void 0, function* () {
-        if (nodes.length !== 1) {
+        yield Promise.all(nodes.map(node => Promise.all(node.getRangeAllFontNames(0, node.characters.length)
+            .map(figma.loadFontAsync))));
+    });
+}
+function checkCharacters(txtndArr) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (txtndArr.length !== 1) {
             figma.ui.postMessage({ pluginMessage: { countable: false } });
             return;
         }
-        const node = nodes[0];
+        const node = txtndArr[0];
         if (node.hasMissingFont) {
             figma.notify("Uh oh, can't work here. Looks like a font is missing!");
             return;
         }
-        const currentCount = yield getMaxCharsPerLine(node);
+        const tempnodeArr = [node.clone()];
+        const charactersArr = node.characters.replace(/\n/g, "").split("");
+        const tempnode = tempnodeArr[0];
+        yield loadFontsForNodes(tempnodeArr);
+        tempnode.deleteCharacters(0, tempnode.characters.length);
+        tempnode.textAutoResize = "WIDTH_AND_HEIGHT";
+        let i = 0;
+        do {
+            tempnode.insertCharacters(0, charactersArr[i++]);
+            yield Promise.resolve(); // Microtask delay for width update
+        } while (i < charactersArr.length && tempnode.width <= node.width);
+        const currentCount = tempnode.characters.length;
+        tempnode.remove();
         figma.ui.postMessage({
             pluginMessage: { countable: true },
             currentCount,
@@ -101,7 +81,7 @@ figma.ui.onmessage = (msg) => __awaiter(this, void 0, void 0, function* () {
             figma.notify("There aren't that many characters in the layers you selected");
             return;
         }
-        yield loadFonts(nodesToResize);
+        yield loadFontsForNodes(nodesToResize);
         for (const node of nodesToResize) {
             node.textAutoResize = "WIDTH_AND_HEIGHT";
             const temp = node.clone();
@@ -110,7 +90,7 @@ figma.ui.onmessage = (msg) => __awaiter(this, void 0, void 0, function* () {
             temp.remove();
             node.resize(newWidth, node.height);
         }
-        // Optionally, update UI after resizing
+        // Update UI after resizing
         checkCharacters(nodesToResize);
     }
     else if (msg.type === "cancel") {

@@ -1,61 +1,43 @@
-function loadFonts(nodesToResize: Array<TextNode>) {
-  return new Promise<void>((resolve, reject) => {
-    let fontList: Array<FontName> = nodesToResize.reduce(
-      (prev: Array<FontName>, node: TextNode) => {
-        function pushFont(font: FontName) {
-          if (
-            !prev.find(
-              (fontName) =>
-                fontName.family === (font as FontName).family &&
-                fontName.style === (font as FontName).style
-            )
-          ) {
-            prev.push(font);
-          }
-        }
-
-        if (node.fontName == figma.mixed) {
-          for (let i = 0; i < node.characters.length; i++) {
-            pushFont(node.getRangeFontName(i, i + 1) as FontName);
-          }
-        } else {
-          pushFont(node.fontName);
-        }
-
-        return prev;
-      },
-      [] as Array<FontName>
-    );
-
-    Promise.all(fontList.map((font) => figma.loadFontAsync(font))).then(() =>
-      resolve()
-    );
-  });
+async function loadFontsForNode(node: TextNode) {
+  const fonts = node.getRangeAllFontNames(0, node.characters.length);
+  await Promise.all(fonts.map(figma.loadFontAsync));
 }
 
-function checkCharacters(txtndArr: Array<any>) {
+async function loadFontsForNodes(nodes: TextNode[]) {
+  await Promise.all(
+    nodes.map(node =>
+      Promise.all(
+        node.getRangeAllFontNames(0, node.characters.length)
+          .map(figma.loadFontAsync)
+      )
+    )
+  );
+}
+
+async function checkCharacters(txtndArr: Array<any>) {
   if (txtndArr.length != 1) {
     figma.ui.postMessage({ pluginMessage: { countable: false } });
-  } else if (txtndArr.every((item) => item.hasMissingFont)) {
+  } else if (txtndArr.some((item) => item.hasMissingFont)) {
     figma.notify("Uh oh, can't work here. Looks like a font is missing!");
   } else {
     let node = txtndArr[0];
     let tempnodeArr = [node.clone()];
-    let charactersArr = node.characters.split("");
+    let charactersArr = node.characters.replace(/\n/g, "").split("");
     let tempnode = tempnodeArr[0];
-    loadFonts(tempnodeArr).then(() => {
-      tempnode.deleteCharacters(0, tempnode.characters.length);
-      tempnode.textAutoResize = "WIDTH_AND_HEIGHT";
-      var i = 0;
-      do {
-        tempnode.insertCharacters(0, charactersArr[i++]);
-      } while (i < charactersArr.length && tempnode.width <= node.width);
-      const currentCount = tempnode.characters.length;
-      tempnode.remove();
-      figma.ui.postMessage({
-        pluginMessage: { countable: true },
-        currentCount,
-      });
+    // await loadFonts(tempnodeArr);
+    await loadFontsForNodes(tempnodeArr);
+    tempnode.deleteCharacters(0, tempnode.characters.length);
+    tempnode.textAutoResize = "WIDTH_AND_HEIGHT";
+    var i = 0;
+    do {
+      tempnode.insertCharacters(0, charactersArr[i++]);
+      await Promise.resolve(); // Microtask delay for width update
+    } while (i < charactersArr.length && tempnode.width <= node.width);
+    const currentCount = tempnode.characters.length;
+    tempnode.remove();
+    figma.ui.postMessage({
+      pluginMessage: { countable: true },
+      currentCount,
     });
   }
 }
@@ -94,14 +76,14 @@ figma.ui.onmessage = (msg) => {
       figma.closePlugin();
     } else if (txtbx.length === 0) {
       figma.notify("No text layers were selected!");
-    } else if (txtbx.every((item) => item.hasMissingFont)) {
+    } else if (txtbx.some((item) => item.hasMissingFont)) {
       figma.notify("Uh oh, can't work here. Looks like a font is missing!");
     } else if (nodesToResize.length === 0) {
       figma.notify(
         "There aren't that many characters in the layers you selected"
       );
     } else {
-      loadFonts(nodesToResize).then(() =>
+      loadFontsForNodes(nodesToResize).then(() =>
         nodesToResize.forEach(function (item: TextNode) {
           item.textAutoResize = "WIDTH_AND_HEIGHT";
           let temp = item.clone();
@@ -109,6 +91,7 @@ figma.ui.onmessage = (msg) => {
           let newWidth = temp.width;
           temp.remove();
           item.resize(newWidth, item.height);
+          checkCharacters(nodesToResize);
         })
       );
     }

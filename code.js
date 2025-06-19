@@ -1,43 +1,45 @@
-function loadFonts(nodesToResize) {
-    return new Promise((resolve, reject) => {
-        let fontList = nodesToResize.reduce((prev, node) => {
-            function pushFont(font) {
-                if (!prev.find((fontName) => fontName.family === font.family &&
-                    fontName.style === font.style)) {
-                    prev.push(font);
-                }
-            }
-            if (node.fontName == figma.mixed) {
-                for (let i = 0; i < node.characters.length; i++) {
-                    pushFont(node.getRangeFontName(i, i + 1));
-                }
-            }
-            else {
-                pushFont(node.fontName);
-            }
-            return prev;
-        }, []);
-        Promise.all(fontList.map((font) => figma.loadFontAsync(font))).then(() => resolve());
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+function loadFontsForNode(node) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const fonts = node.getRangeAllFontNames(0, node.characters.length);
+        yield Promise.all(fonts.map(figma.loadFontAsync));
+    });
+}
+function loadFontsForNodes(nodes) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield Promise.all(nodes.map(node => Promise.all(node.getRangeAllFontNames(0, node.characters.length)
+            .map(figma.loadFontAsync))));
     });
 }
 function checkCharacters(txtndArr) {
-    if (txtndArr.length != 1) {
-        figma.ui.postMessage({ pluginMessage: { countable: false } });
-    }
-    else if (txtndArr.every((item) => item.hasMissingFont)) {
-        figma.notify("Uh oh, can't work here. Looks like a font is missing!");
-    }
-    else {
-        let node = txtndArr[0];
-        let tempnodeArr = [node.clone()];
-        let charactersArr = node.characters.split("");
-        let tempnode = tempnodeArr[0];
-        loadFonts(tempnodeArr).then(() => {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (txtndArr.length != 1) {
+            figma.ui.postMessage({ pluginMessage: { countable: false } });
+        }
+        else if (txtndArr.some((item) => item.hasMissingFont)) {
+            figma.notify("Uh oh, can't work here. Looks like a font is missing!");
+        }
+        else {
+            let node = txtndArr[0];
+            let tempnodeArr = [node.clone()];
+            let charactersArr = node.characters.replace(/\n/g, "").split("");
+            let tempnode = tempnodeArr[0];
+            // await loadFonts(tempnodeArr);
+            yield loadFontsForNodes(tempnodeArr);
             tempnode.deleteCharacters(0, tempnode.characters.length);
             tempnode.textAutoResize = "WIDTH_AND_HEIGHT";
             var i = 0;
             do {
                 tempnode.insertCharacters(0, charactersArr[i++]);
+                yield Promise.resolve(); // Microtask delay for width update
             } while (i < charactersArr.length && tempnode.width <= node.width);
             const currentCount = tempnode.characters.length;
             tempnode.remove();
@@ -45,8 +47,8 @@ function checkCharacters(txtndArr) {
                 pluginMessage: { countable: true },
                 currentCount,
             });
-        });
-    }
+        }
+    });
 }
 //__
 figma.showUI(__html__, { width: 316, height: 200 });
@@ -75,20 +77,21 @@ figma.ui.onmessage = (msg) => {
         else if (txtbx.length === 0) {
             figma.notify("No text layers were selected!");
         }
-        else if (txtbx.every((item) => item.hasMissingFont)) {
+        else if (txtbx.some((item) => item.hasMissingFont)) {
             figma.notify("Uh oh, can't work here. Looks like a font is missing!");
         }
         else if (nodesToResize.length === 0) {
             figma.notify("There aren't that many characters in the layers you selected");
         }
         else {
-            loadFonts(nodesToResize).then(() => nodesToResize.forEach(function (item) {
+            loadFontsForNodes(nodesToResize).then(() => nodesToResize.forEach(function (item) {
                 item.textAutoResize = "WIDTH_AND_HEIGHT";
                 let temp = item.clone();
                 temp.characters = item.characters.slice(0, msg.characters);
                 let newWidth = temp.width;
                 temp.remove();
                 item.resize(newWidth, item.height);
+                checkCharacters(nodesToResize);
             }));
         }
     }
